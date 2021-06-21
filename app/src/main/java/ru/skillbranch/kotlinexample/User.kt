@@ -38,7 +38,10 @@ class User private constructor(
         }
         get() = _login!!
 
-    private var salt: String? = null
+    private var _salt: String? = null
+    private val salt: String by lazy {
+        _salt ?: ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
+    }
 
     private lateinit var passwordHash: String
 
@@ -68,6 +71,19 @@ class User private constructor(
         println("Phone passwordHash is $passwordHash")
         accessCode = code
         sendAccessCodeToUser(rawPhone, code)
+    }
+
+    constructor(
+        firstName: String,
+        lastName: String?,
+        email: String?,
+        pwdHash: String,
+        pwdSalt: String,
+        phone: String?
+    ) : this(firstName, lastName, email = email, meta = mapOf("src" to "csv"), rawPhone = phone) {
+        println("csv constructor")
+        passwordHash = pwdHash
+        _salt = pwdSalt
     }
 
     init {
@@ -110,13 +126,15 @@ class User private constructor(
         } else throw IllegalArgumentException("The entered password does not match the current password")
     }
 
-    private fun encrypt(password: String): String {
-        if (salt.isNullOrEmpty()) {
-            salt = ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
-        }
-        println("Salt while encrypt: $salt")
-        return salt.plus(password).md5()
+    private fun encrypt(password: String): String =
+        salt.plus(password).md5()
+    /*
+    if (salt.isNullOrEmpty()) {
+        salt = ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
     }
+    println("Salt while encrypt: $salt")
+    return salt.plus(password).md5()*/
+
 
     private fun String.md5(): String {
         val md = MessageDigest.getInstance("MD5")
@@ -146,11 +164,20 @@ class User private constructor(
             fullName: String,
             email: String? = null,
             password: String? = null,
-            phone: String? = null
+            phone: String? = null,
+            salt: String? = null
         ): User {
             val (firstName, lastName) = fullName.fullNameToPair()
 
             return when {
+                !salt.isNullOrBlank() && !password.isNullOrBlank() -> User(
+                    firstName,
+                    lastName,
+                    email,
+                    password,
+                    salt,
+                    phone
+                )
                 !phone.isNullOrBlank() -> User(firstName, lastName, phone)
                 !email.isNullOrBlank() && !password.isNullOrBlank() -> User(
                     firstName,

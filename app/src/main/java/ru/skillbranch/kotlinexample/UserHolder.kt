@@ -43,6 +43,20 @@ object UserHolder {
         map.clear()
     }
 
+    fun importUsers(list: List<String>): List<User> {
+        val userList = arrayListOf<User>()
+        list.forEach {
+            val (fullName, email, access, phone) =
+                it.split(";").map { it.trim().ifBlank { null } }.subList(0, 4)
+            userList.add(User.makeUser(
+                fullName = fullName!!, email = email, phone = phone,
+                password = access!!.substringAfter(":"), salt = access.substringBefore(":")
+            )
+                .also { map[it.login] = it })
+        }
+        return userList
+    }
+
     fun registerUserByPhone(fullName: String, rawPhone: String): User =
         User.makeUser(fullName = fullName, phone = rawPhone)
             .also { user ->
