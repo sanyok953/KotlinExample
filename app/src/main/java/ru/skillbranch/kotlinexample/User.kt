@@ -5,6 +5,7 @@ import java.lang.IllegalArgumentException
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.*
 
 class User private constructor(
     val firstName: String,
@@ -18,7 +19,7 @@ class User private constructor(
     private val fullName: String
         get() = listOfNotNull(firstName, lastName)
             .joinToString(" ")
-            .capitalize()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
     private val initials: String
         get() = listOfNotNull(firstName, lastName)
@@ -34,7 +35,7 @@ class User private constructor(
 
     var login: String
         set(value) {
-            _login = value.toLowerCase()
+            _login = value.lowercase(Locale.getDefault())
         }
         get() = _login!!
 
