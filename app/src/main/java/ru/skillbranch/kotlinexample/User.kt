@@ -22,7 +22,7 @@ class User private constructor(
 
     private val initials: String
         get() = listOfNotNull(firstName, lastName)
-            .map { it.first().uppercaseChar() }
+            .map { it.first().toUpperCase() }
             .joinToString(" ")
 
     var phone: String? = null
@@ -128,12 +128,6 @@ class User private constructor(
 
     private fun encrypt(password: String): String =
         salt.plus(password).md5()
-    /*
-    if (salt.isNullOrEmpty()) {
-        salt = ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
-    }
-    println("Salt while encrypt: $salt")
-    return salt.plus(password).md5()*/
 
 
     private fun String.md5(): String {
