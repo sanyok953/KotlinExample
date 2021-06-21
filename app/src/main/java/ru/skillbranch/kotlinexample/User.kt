@@ -25,7 +25,7 @@ class User private constructor(
             .map { it.first().uppercaseChar() }
             .joinToString(" ")
 
-    private var phone: String? = null
+    var phone: String? = null
         set(value) {
             field = value?.replace("""[^+\d]""".toRegex(), "")
         }
@@ -60,7 +60,9 @@ class User private constructor(
         lastName: String?,
         rawPhone: String
     ) : this(firstName, lastName, rawPhone = rawPhone, meta = mapOf("auth" to "sms")) {
-        println("Secondary phone constructor")
+        println("Secondary phone constructor $rawPhone $phone ${phone?.matches("""^[+][0-9]{11}""".toRegex())}")
+        if (phone?.matches("""^[+][0-9]{11}""".toRegex()) == false)
+            throw IllegalArgumentException("Enter a valid phone number starting with a + and containing 11 digits")
         val code = generateAccessCode()
         passwordHash = encrypt(code)
         println("Phone passwordHash is $passwordHash")
@@ -86,6 +88,14 @@ class User private constructor(
             phone: $phone
             meta: $meta
         """.trimIndent()
+    }
+
+    fun requestAccessCode(rawPhone: String) {
+        val code = generateAccessCode()
+        passwordHash = encrypt(code)
+        println("Phone passwordHash is $passwordHash")
+        accessCode = code
+        sendAccessCodeToUser(rawPhone, code)
     }
 
     fun checkPassword(pass: String) = encrypt(pass) == passwordHash.also {

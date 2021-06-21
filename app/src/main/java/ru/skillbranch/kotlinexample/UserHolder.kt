@@ -17,11 +17,26 @@ object UserHolder {
                 map[user.login] = user
         }
 
-    fun loginUser(login: String, password: String): String? =
-        map[login.trim()]?.let {
-            if (it.checkPassword(password)) it.userInfo
-            else null
+    fun requestAccessCode(login: String): Unit {
+        map[login.replace("""[^+\d]""".toRegex(), "")]?.let {
+            println("HH * $login")
+            it.requestAccessCode(login)
         }
+    }
+
+    fun loginUser(login: String, password: String): String? =
+        if (login.trim() in map) {
+            map[login.trim()]?.let {
+                if (it.checkPassword(password)) it.userInfo
+                else null
+            }
+        } else {
+            map[login?.replace("""[^+\d]""".toRegex(), "")]?.let {
+                if (it.checkPassword(password)) it.userInfo
+                else null
+            }
+        }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     fun clearHolder() {
@@ -29,6 +44,11 @@ object UserHolder {
     }
 
     fun registerUserByPhone(fullName: String, rawPhone: String): User =
-        User.makeUser(fullName, rawPhone)
-            .also { user -> map[user.login] = user }
+        User.makeUser(fullName = fullName, phone = rawPhone)
+            .also { user ->
+                if (user.phone in map)
+                    throw IllegalArgumentException("A user with this phone already exists")
+                else
+                    map[user.login] = user
+            }
 }
